@@ -1,6 +1,7 @@
 import("std/list") as list
 import("std/str") as str
 import("std/io") as io
+import("std/math") as math
 import("./cohort_analysis") as cohort
 import("./cohort_metrics") as metrics
 import("./cohort_export") as cexport
@@ -21,12 +22,10 @@ fn variance(xs) {
 }
 
 fn stddev(xs) {
-  import("std/math") as math
   math.sqrt(variance(xs))
 }
 
 fn sem(xs) {
-  import("std/math") as math
   stddev(xs) / math.sqrt(list.len(xs))
 }
 
