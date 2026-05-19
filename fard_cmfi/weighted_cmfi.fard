@@ -1,0 +1,35 @@
+import("std/list") as list
+import("./cohort_export") as cexport
+import("./cmfi_core") as core
+
+export {
+  normalized_panel_weights,
+  weighted_score,
+  weighted_cmfi
+}
+
+fn sum(xs) {
+  list.fold(xs, 0.0, fn(acc, x) { acc + x })
+}
+
+fn normalized_panel_weights(expr_path, clinical_path) {
+  let ranked = cexport.panel_stage_summary(expr_path, clinical_path)
+  in let deltas = list.map(ranked, fn(r) { r.delta_stage4_minus_stage0 })
+  in let total = sum(deltas)
+  in list.map(deltas, fn(x) { x / total })
+}
+
+fn weighted_score(panel_fc, weights) {
+  list.fold(list.range(0, list.len(weights)), 0.0, fn(acc, i) {
+    acc + (panel_fc[i] * weights[i])
+  })
+}
+
+fn weighted_cmfi(panel_fc, weights) {
+  let s = weighted_score(panel_fc, weights)
+  in core.cmfi_from_latent({
+    dphi_res: s,
+    dkappa_A: s / 2.0,
+    dkappa_B: s / 2.0
+  })
+}

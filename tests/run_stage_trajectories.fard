@@ -1,0 +1,6 @@
+import("../fard_cmfi/cohort_export") as cexport
+
+cexport.panel_stage_summary(
+  "data/fibrosis_expr.csv",
+  "data/fibrosis_clinical.csv"
+)

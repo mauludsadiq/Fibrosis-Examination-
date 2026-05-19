@@ -1,0 +1,36 @@
+import("../fard_cmfi/cohort_analysis") as cohort
+import("../fard_cmfi/weighted_cmfi") as w
+import("std/list") as list
+
+let rows = cohort.cohort_cmfi(
+  "data/fibrosis_expr.csv",
+  "data/fibrosis_clinical.csv"
+)
+
+let weights = w.normalized_panel_weights(
+  "data/fibrosis_expr.csv",
+  "data/fibrosis_clinical.csv"
+)
+
+list.map(rows, fn(r) {
+  {
+    sample_id: r.sample_id,
+    stage: r.stage,
+    original_cmfi: r.cmfi,
+    weighted_cmfi: w.weighted_cmfi(
+      [
+        r.panel_fold_changes[0],
+        r.panel_fold_changes[1],
+        r.panel_fold_changes[2],
+        r.panel_fold_changes[3],
+        r.panel_fold_changes[4],
+        r.panel_fold_changes[5],
+        r.panel_fold_changes[6],
+        r.panel_fold_changes[7],
+        r.panel_fold_changes[8],
+        r.panel_fold_changes[13]
+      ],
+      weights
+    )
+  }
+})
