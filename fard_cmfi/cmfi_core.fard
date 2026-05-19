@@ -1,13 +1,15 @@
 import("std/list") as list
 import("std/math") as math
-import("std/rec") as rec
+import("std/float") as float
 import("./latent_params") as lp
 
 export { dot, score_from_panel_vector, latent_from_score, cmfi_from_latent, evaluate_panel_vector }
 
 fn dot(xs, ys) {
   list.fold(list.range(0, list.len(xs)), 0.0, fn(acc, i) {
-    acc + (xs[i] * ys[i])
+    let x = xs[i]
+    in let y = ys[i]
+    in if float.is_nan(x) || float.is_nan(y) then acc else acc + (x * y)
   })
 }
 

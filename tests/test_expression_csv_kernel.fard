@@ -1,0 +1,34 @@
+import("../fard_cmfi/expression_csv") as exprcsv
+import("../fard_cmfi/fibrosis_kernel") as kernel
+import("../fard_cmfi/kernel_with_mechanics") as full
+import("std/list") as list
+
+test "expression csv derives sample ids from source header" {
+  let rows = exprcsv.read_expression_csv("data/fibrosis_expr.csv")
+  in list.len(exprcsv.sample_ids(rows)) > 0
+}
+
+test "expression csv derives baseline ids from source header" {
+  let rows = exprcsv.read_expression_csv("data/fibrosis_expr.csv")
+  in list.len(exprcsv.baseline_sample_ids(rows)) > 0
+}
+
+test "source expression csv drives fibrosis kernel" {
+  let rows = exprcsv.read_expression_csv("data/fibrosis_expr.csv")
+  in let ids = exprcsv.sample_ids(rows)
+  in let baseline = exprcsv.baseline_sample_ids(rows)
+  in let expr = exprcsv.expr_by_gene(rows)
+  in let sample_id = list.last(ids)
+  in let r = kernel.fibrosis_sample(expr, sample_id, baseline)
+  in list.len(r.panel_fold_changes) == 27 && r.cmfi > 0.0
+}
+
+test "source expression csv drives full mechanics progression kernel" {
+  let rows = exprcsv.read_expression_csv("data/fibrosis_expr.csv")
+  in let ids = exprcsv.sample_ids(rows)
+  in let baseline = exprcsv.baseline_sample_ids(rows)
+  in let expr = exprcsv.expr_by_gene(rows)
+  in let sample_id = list.last(ids)
+  in let r = full.evaluate_sample(expr, sample_id, baseline, 0.1, 4)
+  in list.len(r.mechanics) == 7 && list.len(r.progression) == 4 && r.cmfi > 0.0
+}

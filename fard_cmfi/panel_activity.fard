@@ -1,6 +1,6 @@
 import("std/list") as list
 import("std/rec") as rec
-import("std/math") as math
+import("std/null") as n
 import("./panel_definitions") as panels
 
 export { mean, gene_value, panel_activity, all_panel_activities }
@@ -11,14 +11,15 @@ fn mean(xs) {
 
 fn gene_value(expr_by_gene, gene, sample_id) {
   let row = rec.get(expr_by_gene, gene)
-  in rec.get(row, sample_id)
+  in if n.isNull(row) then null else rec.get(row, sample_id)
 }
 
 fn panel_activity(expr_by_gene, sample_id, panel_name) {
   let panel_map = panels.panel_map_v3()
   in let genes = rec.get(panel_map, panel_name)
-  in let vals = list.map(genes, fn(g) { gene_value(expr_by_gene, g, sample_id) })
-  in mean(vals)
+  in let raw_vals = list.map(genes, fn(g) { gene_value(expr_by_gene, g, sample_id) })
+  in let vals = list.filter(raw_vals, fn(v) { !n.isNull(v) })
+  in if list.len(vals) == 0 then 0.0 else mean(vals)
 }
 
 fn all_panel_activities(expr_by_gene, sample_id) {

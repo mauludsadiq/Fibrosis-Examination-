@@ -1,0 +1,36 @@
+import("std/csv") as csv
+import("std/io") as io
+import("std/list") as list
+import("std/rec") as rec
+import("std/str") as str
+import("std/float") as float
+
+export { read_expression_csv, sample_ids, baseline_sample_ids, expr_by_gene }
+
+fn read_expression_csv(path) {
+  io.read_file(path).ok |> csv.parse()
+}
+
+fn sample_ids(rows) {
+  list.drop(rows[0], 1)
+}
+
+fn baseline_sample_ids(rows) {
+  list.filter(sample_ids(rows), fn(k) {
+    str.starts_with(k, "sample_0_")
+  })
+}
+
+fn row_to_sample_record(header, row) {
+  list.fold(list.range(1, list.len(header)), {}, fn(acc, i) {
+    rec.set(acc, header[i], float.parse(row[i])?)
+  })
+}
+
+fn expr_by_gene(rows) {
+  let header = rows[0]
+  in let body = list.drop(rows, 1)
+  in list.fold(body, {}, fn(acc, row) {
+    rec.set(acc, row[0], row_to_sample_record(header, row))
+  })
+}
