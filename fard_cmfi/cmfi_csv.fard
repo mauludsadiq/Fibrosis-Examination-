@@ -1,0 +1,26 @@
+import("std/csv") as csv
+import("std/io") as io
+import("std/list") as list
+import("std/rec") as rec
+import("./mechanics") as mech
+import("./progression") as prog
+
+export { read_cmfi_csv, evaluate_cmfi_rows }
+
+fn read_cmfi_csv(path) {
+  let text = io.read_file(path).ok
+  in csv.parse(text)
+}
+
+fn evaluate_cmfi_rows(rows, progression_rate, progression_steps) {
+  list.map(rows, fn(row) {
+    let sample_id = rec.get(row, "sample_id")
+    in let cmfi_scalar = rec.get(row, "cmfi")
+    in {
+      sample_id: sample_id,
+      cmfi: cmfi_scalar,
+      mechanics: mech.predict_all(cmfi_scalar),
+      progression: prog.trajectory(sample_id, cmfi_scalar, progression_rate, progression_steps)
+    }
+  })
+}

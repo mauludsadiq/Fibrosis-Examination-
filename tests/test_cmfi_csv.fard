@@ -1,0 +1,11 @@
+import("../fard_cmfi/cmfi_csv") as cmfi_csv
+import("std/list") as list
+
+test "evaluate cmfi csv rows applies mechanics and progression" {
+  let rows = [
+    { sample_id: "sample_a", cmfi: 2.0 },
+    { sample_id: "sample_b", cmfi: 3.0 }
+  ]
+  in let out = cmfi_csv.evaluate_cmfi_rows(rows, 0.5, 4)
+  in list.len(out) == 2 && out[0].sample_id == "sample_a" && list.len(out[0].mechanics) == 7 && list.len(out[0].progression) == 4
+}
