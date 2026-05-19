@@ -1,0 +1,19 @@
+import("./fibrosis_kernel") as fib
+import("./mechanics") as mech
+import("./progression") as prog
+
+export { evaluate_sample }
+
+fn evaluate_sample(expr_by_gene, sample_id, baseline_sample_ids, progression_rate, progression_steps) {
+  let cmfi_row = fib.fibrosis_sample(expr_by_gene, sample_id, baseline_sample_ids)
+  in {
+    sample_id: sample_id,
+    panel_fold_changes: cmfi_row.panel_fold_changes,
+    dphi_res: cmfi_row.dphi_res,
+    dkappa_A: cmfi_row.dkappa_A,
+    dkappa_B: cmfi_row.dkappa_B,
+    cmfi: cmfi_row.cmfi,
+    mechanics: mech.predict_all(cmfi_row.cmfi),
+    progression: prog.trajectory(sample_id, cmfi_row.cmfi, progression_rate, progression_steps)
+  }
+}

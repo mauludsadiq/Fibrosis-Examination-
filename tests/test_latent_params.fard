@@ -1,0 +1,17 @@
+import("../fard_cmfi/latent_params") as lp
+import("std/list") as list
+
+test "latent params v3 has 27 weights" {
+  let p = lp.panel_stage_v3()
+  in list.len(p.w) == 27
+}
+
+test "latent params field count matches weight count" {
+  let p = lp.panel_stage_v3()
+  in p.n_fields == list.len(p.field_order)
+}
+
+test "latent params intercept is fixed" {
+  let p = lp.panel_stage_v3()
+  in p.b == 0.0106464421169159
+}

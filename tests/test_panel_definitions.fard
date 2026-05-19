@@ -1,0 +1,21 @@
+import("../fard_cmfi/panel_definitions") as panels
+import("std/list") as list
+import("std/rec") as rec
+
+test "panel v3 has 27 fields" {
+  list.len(panels.field_order_v3()) == 27
+}
+
+test "active panel set has 10 fields" {
+  list.len(panels.active_panel_fields_v3()) == 10
+}
+
+test "collagen genes match source definition" {
+  let m = panels.panel_map_v3()
+  in rec.get(m, "collagen") == ["COL1A1", "COL1A2", "COL3A1", "COL5A1", "COL5A2"]
+}
+
+test "ros genes match source definition" {
+  let m = panels.panel_map_v3()
+  in rec.get(m, "ros") == ["SOD1", "SOD2", "CAT", "GPX1", "NOX4"]
+}

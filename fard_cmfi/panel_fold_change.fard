@@ -1,0 +1,31 @@
+import("std/list") as list
+import("std/rec") as rec
+import("std/math") as math
+import("./panel_activity") as pa
+import("./panel_definitions") as panels
+
+export { baseline_mean, log2_fold_change, panel_fold_change, all_panel_fold_changes }
+
+fn baseline_mean(expr_by_gene, baseline_sample_ids, panel_name) {
+  let vals = list.map(baseline_sample_ids, fn(sample_id) {
+    pa.panel_activity(expr_by_gene, sample_id, panel_name)
+  })
+  in pa.mean(vals)
+}
+
+fn log2_fold_change(value, baseline) {
+  math.log2(value / baseline)
+}
+
+fn panel_fold_change(expr_by_gene, sample_id, baseline_sample_ids, panel_name) {
+  let value = pa.panel_activity(expr_by_gene, sample_id, panel_name)
+  in let base = baseline_mean(expr_by_gene, baseline_sample_ids, panel_name)
+  in log2_fold_change(value, base)
+}
+
+fn all_panel_fold_changes(expr_by_gene, sample_id, baseline_sample_ids) {
+  let fields = panels.field_order_v3()
+  in list.map(fields, fn(panel_name) {
+    panel_fold_change(expr_by_gene, sample_id, baseline_sample_ids, panel_name)
+  })
+}

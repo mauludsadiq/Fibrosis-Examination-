@@ -1,0 +1,27 @@
+import("../fard_cmfi/panel_fold_change") as fc
+
+test "log2 fold change doubles to one" {
+  fc.log2_fold_change(20.0, 10.0) == 1.0
+}
+
+test "baseline mean averages baseline sample panel activity" {
+  let expr = {
+    COL1A1: { s0: 10.0, s1: 20.0, sx: 40.0 },
+    COL1A2: { s0: 10.0, s1: 20.0, sx: 40.0 },
+    COL3A1: { s0: 10.0, s1: 20.0, sx: 40.0 },
+    COL5A1: { s0: 10.0, s1: 20.0, sx: 40.0 },
+    COL5A2: { s0: 10.0, s1: 20.0, sx: 40.0 }
+  }
+  in fc.baseline_mean(expr, ["s0", "s1"], "collagen") == 15.0
+}
+
+test "panel fold change compares sample to baseline" {
+  let expr = {
+    COL1A1: { s0: 10.0, s1: 10.0, sx: 20.0 },
+    COL1A2: { s0: 10.0, s1: 10.0, sx: 20.0 },
+    COL3A1: { s0: 10.0, s1: 10.0, sx: 20.0 },
+    COL5A1: { s0: 10.0, s1: 10.0, sx: 20.0 },
+    COL5A2: { s0: 10.0, s1: 10.0, sx: 20.0 }
+  }
+  in fc.panel_fold_change(expr, "sx", ["s0", "s1"], "collagen") == 1.0
+}

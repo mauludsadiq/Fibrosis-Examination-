@@ -1,0 +1,17 @@
+import("std/list") as list
+
+export { step_cmfi, trajectory }
+
+fn step_cmfi(cmfi0, rate, step_index) {
+  cmfi0 + (rate * step_index)
+}
+
+fn trajectory(sample_id, cmfi0, rate, steps) {
+  list.map(list.range(0, steps), fn(i) {
+    {
+      sample_id: sample_id,
+      time_step: i,
+      cmfi: step_cmfi(cmfi0, rate, i)
+    }
+  })
+}

@@ -1,0 +1,25 @@
+import("../fard_cmfi/cmfi_core") as cmfi
+import("std/math") as math
+
+test "dot product computes weighted sum" {
+  cmfi.dot([1.0, 2.0, 3.0], [4.0, 5.0, 6.0]) == 32.0
+}
+
+test "latent from score maps score to three coordinates" {
+  let z = cmfi.latent_from_score(2.0)
+  in z.dphi_res == 2.0 && z.dkappa_A == 1.0 && z.dkappa_B == 1.0
+}
+
+test "cmfi metric matches sqrt dphi2 plus weighted kappas" {
+  let z = { dphi_res: 2.0, dkappa_A: 1.0, dkappa_B: 1.0 }
+  in cmfi.cmfi_from_latent(z) == math.sqrt(12.0)
+}
+
+test "zero panel vector still includes intercept" {
+  let r = cmfi.evaluate_panel_vector("sample_zero", [
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+  ])
+  in r.dphi_res == 0.0106464421169159
+}

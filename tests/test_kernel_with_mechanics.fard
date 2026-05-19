@@ -1,0 +1,37 @@
+import("../fard_cmfi/kernel_with_mechanics") as kernel
+import("std/list") as list
+
+test "integrated kernel returns cmfi mechanics and progression" {
+  let row = { s0: 10.0, sx: 20.0 }
+  in let expr = {
+    COL1A1: row, COL1A2: row, COL3A1: row, COL5A1: row, COL5A2: row,
+    ELN: row, FBLN5: row, EFEMP2: row,
+    LOX: row, LOXL1: row, LOXL2: row,
+    MMP1: row, MMP2: row, MMP9: row, MMP13: row,
+    TIMP1: row, TIMP2: row, TIMP3: row, TIMP4: row,
+    ALPL: row, BGLAP: row, SPP1: row, IBSP: row,
+    ACAN: row, VCAN: row, PRG4: row,
+    IL1B: row, TNF: row, IL6: row,
+    TGFB1: row,
+    PDGFA: row, PDGFB: row, PDGFC: row, PDGFD: row,
+    FGF1: row, FGF2: row, FGF7: row, FGF10: row, FGF18: row, FGF21: row,
+    VEGFA: row, VEGFB: row, VEGFC: row, VEGFD: row, PGF: row,
+    ITGA1: row, ITGA2: row, ITGA3: row, ITGA5: row, ITGA11: row, ITGB1: row, ITGB3: row, ITGB5: row, ITGB8: row,
+    SP1: row, SP3: row, RUNX2: row, SOX9: row, TWIST1: row, SNAI1: row,
+    NFKB1: row, RELA: row, STAT3: row, JUN: row, FOS: row,
+    HK2: row, PFKM: row, PKM: row, LDHA: row, LDHB: row,
+    NDUFS1: row, SDHA: row, UQCRC1: row, COX5A: row, ATP5F1A: row,
+    HIF1A: row, EPAS1: row, ARNT: row, SLC2A1: row,
+    CDH1: row, CDH2: row, CDH3: row, CDH11: row,
+    WNT3A: row, WNT5A: row, WNT7A: row, WNT11: row, CTNNB1: row,
+    NOTCH1: row, NOTCH2: row, JAG1: row, DLL4: row, HES1: row,
+    SHH: row, IHH: row, PTCH1: row, SMO: row, GLI1: row,
+    ATG5: row, ATG7: row, BECN1: row, MAP1LC3B: row, SQSTM1: row,
+    BAX: row, BCL2: row, CASP3: row, CASP8: row, TP53: row,
+    CDKN1A: row, CDKN2A: row, LMNB1: row, HMGB1: row, IL1A: row,
+    TFAM: row, NRF1: row, PPARGC1A: row, MFN1: row, MFN2: row,
+    SOD1: row, SOD2: row, CAT: row, GPX1: row, NOX4: row
+  }
+  in let r = kernel.evaluate_sample(expr, "sx", ["s0"], 0.1, 4)
+  in list.len(r.panel_fold_changes) == 27 && list.len(r.mechanics) == 7 && list.len(r.progression) == 4
+}

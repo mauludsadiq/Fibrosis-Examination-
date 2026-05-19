@@ -1,0 +1,41 @@
+import("std/list") as list
+import("std/math") as math
+import("std/rec") as rec
+import("./latent_params") as lp
+
+export { dot, score_from_panel_vector, latent_from_score, cmfi_from_latent, evaluate_panel_vector }
+
+fn dot(xs, ys) {
+  list.fold(list.range(0, list.len(xs)), 0.0, fn(acc, i) {
+    acc + (xs[i] * ys[i])
+  })
+}
+
+fn score_from_panel_vector(panel_vector) {
+  let p = lp.panel_stage_v3()
+  in dot(panel_vector, p.w) + p.b
+}
+
+fn latent_from_score(score) {
+  {
+    dphi_res: score,
+    dkappa_A: score / 2.0,
+    dkappa_B: score / 2.0
+  }
+}
+
+fn cmfi_from_latent(latent) {
+  math.sqrt((latent.dphi_res * latent.dphi_res) + (4.0 * latent.dkappa_A * latent.dkappa_A) + (4.0 * latent.dkappa_B * latent.dkappa_B))
+}
+
+fn evaluate_panel_vector(sample_id, panel_vector) {
+  let score = score_from_panel_vector(panel_vector)
+  in let latent = latent_from_score(score)
+  in {
+    sample_id: sample_id,
+    dphi_res: latent.dphi_res,
+    dkappa_A: latent.dkappa_A,
+    dkappa_B: latent.dkappa_B,
+    cmfi: cmfi_from_latent(latent)
+  }
+}

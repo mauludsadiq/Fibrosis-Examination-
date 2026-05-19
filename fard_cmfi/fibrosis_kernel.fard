@@ -1,0 +1,17 @@
+import("./panel_fold_change") as fc
+import("./cmfi_core") as core
+
+export { fibrosis_sample }
+
+fn fibrosis_sample(expr_by_gene, sample_id, baseline_sample_ids) {
+  let panel_fc = fc.all_panel_fold_changes(expr_by_gene, sample_id, baseline_sample_ids)
+  in let cmfi = core.evaluate_panel_vector(sample_id, panel_fc)
+  in {
+    sample_id: sample_id,
+    panel_fold_changes: panel_fc,
+    dphi_res: cmfi.dphi_res,
+    dkappa_A: cmfi.dkappa_A,
+    dkappa_B: cmfi.dkappa_B,
+    cmfi: cmfi.cmfi
+  }
+}

@@ -1,0 +1,16 @@
+import("../fard_cmfi/mechanics") as mech
+import("std/list") as list
+
+test "default mechanics model has seven targets" {
+  list.len(mech.default_model()) == 7
+}
+
+test "predict one applies alpha plus beta cmfi" {
+  let r = mech.predict_one(2.5, { organ: "x", target: "y", alpha: 1.0, beta: 2.0 })
+  in r.prediction == 6.0
+}
+
+test "quality score uses negative beta" {
+  let rows = mech.predict_all(3.0)
+  in rows[3].target == "cartilage_quality_score_T" && rows[3].prediction == -3.0
+}

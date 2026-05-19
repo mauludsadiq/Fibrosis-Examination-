@@ -1,0 +1,80 @@
+export { field_order_v3, active_panel_fields_v3, panel_map_v3 }
+
+fn field_order_v3() {
+  [
+    "collagen",
+    "elastin",
+    "lox",
+    "mmp",
+    "timp",
+    "mineral",
+    "proteoglycan",
+    "inflammation",
+    "tgfb",
+    "pdgf",
+    "fgf",
+    "vegf",
+    "integrin",
+    "tf_ecm",
+    "tf_inflammation",
+    "glycolysis",
+    "oxphos",
+    "hypoxia",
+    "cadherin",
+    "wnt",
+    "notch",
+    "hedgehog",
+    "autophagy",
+    "apoptosis",
+    "senescence",
+    "mitochondria",
+    "ros"
+  ]
+}
+
+fn active_panel_fields_v3() {
+  [
+    "collagen_fc",
+    "elastin_fc",
+    "inflammation_fc",
+    "lox_fc",
+    "mineral_fc",
+    "mmp_fc",
+    "proteoglycan_fc",
+    "tf_ecm_fc",
+    "tgfb_fc",
+    "timp_fc"
+  ]
+}
+
+fn panel_map_v3() {
+  {
+    collagen: ["COL1A1", "COL1A2", "COL3A1", "COL5A1", "COL5A2"],
+    elastin: ["ELN", "FBLN5", "EFEMP2"],
+    lox: ["LOX", "LOXL1", "LOXL2"],
+    mmp: ["MMP1", "MMP2", "MMP9", "MMP13"],
+    timp: ["TIMP1", "TIMP2", "TIMP3", "TIMP4"],
+    mineral: ["ALPL", "BGLAP", "SPP1", "IBSP"],
+    proteoglycan: ["ACAN", "VCAN", "PRG4"],
+    inflammation: ["IL1B", "TNF", "IL6"],
+    tgfb: ["TGFB1"],
+    pdgf: ["PDGFA", "PDGFB", "PDGFC", "PDGFD"],
+    fgf: ["FGF1", "FGF2", "FGF7", "FGF10", "FGF18", "FGF21"],
+    vegf: ["VEGFA", "VEGFB", "VEGFC", "VEGFD", "PGF"],
+    integrin: ["ITGA1", "ITGA2", "ITGA3", "ITGA5", "ITGA11", "ITGB1", "ITGB3", "ITGB5", "ITGB8"],
+    tf_ecm: ["SP1", "SP3", "RUNX2", "SOX9", "TWIST1", "SNAI1"],
+    tf_inflammation: ["NFKB1", "RELA", "STAT3", "JUN", "FOS"],
+    glycolysis: ["HK2", "PFKM", "PKM", "LDHA", "LDHB"],
+    oxphos: ["NDUFS1", "SDHA", "UQCRC1", "COX5A", "ATP5F1A"],
+    hypoxia: ["HIF1A", "EPAS1", "ARNT", "VEGFA", "SLC2A1"],
+    cadherin: ["CDH1", "CDH2", "CDH3", "CDH11"],
+    wnt: ["WNT3A", "WNT5A", "WNT7A", "WNT11", "CTNNB1"],
+    notch: ["NOTCH1", "NOTCH2", "JAG1", "DLL4", "HES1"],
+    hedgehog: ["SHH", "IHH", "PTCH1", "SMO", "GLI1"],
+    autophagy: ["ATG5", "ATG7", "BECN1", "MAP1LC3B", "SQSTM1"],
+    apoptosis: ["BAX", "BCL2", "CASP3", "CASP8", "TP53"],
+    senescence: ["CDKN1A", "CDKN2A", "LMNB1", "HMGB1", "IL1A"],
+    mitochondria: ["TFAM", "NRF1", "PPARGC1A", "MFN1", "MFN2"],
+    ros: ["SOD1", "SOD2", "CAT", "GPX1", "NOX4"]
+  }
+}

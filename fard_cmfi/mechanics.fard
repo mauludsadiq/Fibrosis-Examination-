@@ -1,0 +1,31 @@
+import("std/list") as list
+
+export { default_model, predict_one, predict_all }
+
+fn default_model() {
+  [
+    { organ: "cartilage", target: "cartilage_E_comp_MPa_T", alpha: 0.0, beta: 1.0 },
+    { organ: "cartilage", target: "cartilage_degeneration_index_T", alpha: 0.0, beta: 1.0 },
+    { organ: "cartilage", target: "cartilage_friction_coeff_T", alpha: 0.0, beta: 1.0 },
+    { organ: "cartilage", target: "cartilage_quality_score_T", alpha: 0.0, beta: -1.0 },
+    { organ: "vessel", target: "vessel_pulse_wave_velocity_T", alpha: 0.0, beta: 1.0 },
+    { organ: "vessel", target: "vessel_rupture_risk_T", alpha: 0.0, beta: 1.0 },
+    { organ: "vessel", target: "vessel_vascular_stiffness_index_T", alpha: 0.0, beta: 1.0 }
+  ]
+}
+
+fn predict_one(cmfi_scalar, model_row) {
+  {
+    organ: model_row.organ,
+    target: model_row.target,
+    alpha: model_row.alpha,
+    beta: model_row.beta,
+    prediction: model_row.alpha + (model_row.beta * cmfi_scalar)
+  }
+}
+
+fn predict_all(cmfi_scalar) {
+  list.map(default_model(), fn(row) {
+    predict_one(cmfi_scalar, row)
+  })
+}

@@ -1,0 +1,15 @@
+import("../fard_cmfi/progression") as prog
+import("std/list") as list
+
+test "step cmfi advances linearly" {
+  prog.step_cmfi(10.0, 0.5, 4) == 12.0
+}
+
+test "trajectory emits requested number of steps" {
+  list.len(prog.trajectory("s1", 10.0, 0.5, 5)) == 5
+}
+
+test "trajectory preserves sample and final cmfi" {
+  let t = prog.trajectory("s1", 10.0, 0.5, 5)
+  in t[4].sample_id == "s1" && t[4].cmfi == 12.0
+}
