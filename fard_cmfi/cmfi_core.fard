@@ -22,7 +22,7 @@ fn latent_from_score(score) {
   {
     dphi_res: score,
     dkappa_A: score / 2.0,
-    dkappa_B: score / 2.0
+    dkappa_B: -(score / 2.0)
   }
 }
 

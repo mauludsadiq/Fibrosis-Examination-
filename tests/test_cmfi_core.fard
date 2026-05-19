@@ -7,7 +7,7 @@ test "dot product computes weighted sum" {
 
 test "latent from score maps score to three coordinates" {
   let z = cmfi.latent_from_score(2.0)
-  in z.dphi_res == 2.0 && z.dkappa_A == 1.0 && z.dkappa_B == 1.0
+  in z.dphi_res == 2.0 && z.dkappa_A == 1.0 && z.dkappa_B == -1.0
 }
 
 test "cmfi metric matches sqrt dphi2 plus weighted kappas" {

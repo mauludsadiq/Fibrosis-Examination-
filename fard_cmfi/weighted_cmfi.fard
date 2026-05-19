@@ -30,6 +30,6 @@ fn weighted_cmfi(panel_fc, weights) {
   in core.cmfi_from_latent({
     dphi_res: s,
     dkappa_A: s / 2.0,
-    dkappa_B: s / 2.0
+    dkappa_B: -(s / 2.0)
   })
 }
