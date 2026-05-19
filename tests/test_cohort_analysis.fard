@@ -1,0 +1,23 @@
+import("../fard_cmfi/cohort_analysis") as cohort
+import("std/list") as list
+
+test "full cohort derives cmfi for all clinical samples" {
+  let rows = cohort.cohort_cmfi("data/fibrosis_expr.csv", "data/fibrosis_clinical.csv")
+  in list.len(rows) == 15
+}
+
+test "derived cmfi is positively rank correlated with clinical stage" {
+  let rows = cohort.cohort_cmfi("data/fibrosis_expr.csv", "data/fibrosis_clinical.csv")
+  in cohort.spearman(rows) > 0.9
+}
+
+test "highest stage sample has higher cmfi than baseline sample" {
+  let rows = cohort.cohort_cmfi("data/fibrosis_expr.csv", "data/fibrosis_clinical.csv")
+  in rows[14].cmfi > rows[0].cmfi
+}
+
+test "panel perturbation changes selected coordinate only" {
+  let xs = [1.0, 2.0, 3.0]
+  in let ys = cohort.perturb_panel_vector(xs, 1, 0.5)
+  in ys == [1.0, 1.0, 3.0]
+}

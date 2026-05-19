@@ -1,0 +1,80 @@
+import("std/csv") as csv
+import("std/io") as io
+import("std/list") as list
+import("std/rec") as rec
+import("std/float") as float
+import("std/math") as math
+import("./expression_csv") as exprcsv
+import("./fibrosis_kernel") as kernel
+import("./kernel_with_mechanics") as full
+
+export { read_clinical_csv, stage_map, cohort_cmfi, rank_values, spearman, perturb_panel_vector }
+
+fn read_clinical_csv(path) {
+  io.read_file(path).ok |> csv.parse()
+}
+
+fn stage_map(rows) {
+  let body = list.drop(rows, 1)
+  in list.fold(body, {}, fn(acc, row) {
+    rec.set(acc, row[0], float.parse(row[1])?)
+  })
+}
+
+fn cohort_cmfi(expr_path, clinical_path) {
+  let expr_rows = exprcsv.read_expression_csv(expr_path)
+  in let clinical_rows = read_clinical_csv(clinical_path)
+  in let baseline = exprcsv.baseline_sample_ids(expr_rows)
+  in let expr = exprcsv.expr_by_gene(expr_rows)
+  in let stages = stage_map(clinical_rows)
+  in let ids = list.drop(clinical_rows, 1)
+  in list.map(ids, fn(row) {
+    let sample_id = row[0]
+    in let r = kernel.fibrosis_sample(expr, sample_id, baseline)
+    in {
+      sample_id: sample_id,
+      stage: rec.get(stages, sample_id),
+      cmfi: r.cmfi,
+      dphi_res: r.dphi_res,
+      dkappa_A: r.dkappa_A,
+      dkappa_B: r.dkappa_B,
+      panel_fold_changes: r.panel_fold_changes
+    }
+  })
+}
+
+fn rank_one(xs, x) {
+  list.fold(xs, 1.0, fn(acc, y) {
+    if y < x then acc + 1.0 else acc
+  })
+}
+
+fn rank_values(xs) {
+  list.map(xs, fn(x) { rank_one(xs, x) })
+}
+
+fn mean(xs) {
+  list.fold(xs, 0.0, fn(acc, x) { acc + x }) / list.len(xs)
+}
+
+fn pearson(xs, ys) {
+  let mx = mean(xs)
+  in let my = mean(ys)
+  in let idx = list.range(0, list.len(xs))
+  in let num = list.fold(idx, 0.0, fn(acc, i) { acc + ((xs[i] - mx) * (ys[i] - my)) })
+  in let denx = list.fold(idx, 0.0, fn(acc, i) { acc + ((xs[i] - mx) * (xs[i] - mx)) })
+  in let deny = list.fold(idx, 0.0, fn(acc, i) { acc + ((ys[i] - my) * (ys[i] - my)) })
+  in num / math.sqrt(denx * deny)
+}
+
+fn spearman(rows) {
+  let stages = list.map(rows, fn(r) { r.stage })
+  in let cmfis = list.map(rows, fn(r) { r.cmfi })
+  in pearson(rank_values(stages), rank_values(cmfis))
+}
+
+fn perturb_panel_vector(panel_vector, panel_index, factor) {
+  list.map(list.range(0, list.len(panel_vector)), fn(i) {
+    if i == panel_index then panel_vector[i] * factor else panel_vector[i]
+  })
+}
