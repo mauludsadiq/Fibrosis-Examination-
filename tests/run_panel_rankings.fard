@@ -1,0 +1,12 @@
+import("../fard_cmfi/panel_rankings") as rank
+
+{
+  ranked_panels: rank.top_panels(
+    "data/fibrosis_expr.csv",
+    "data/fibrosis_clinical.csv"
+  ),
+  proteoglycan: rank.proteoglycan_profile(
+    "data/fibrosis_expr.csv",
+    "data/fibrosis_clinical.csv"
+  )
+}

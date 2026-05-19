@@ -1,0 +1,29 @@
+import("std/list") as list
+import("./cohort_export") as cexport
+
+export { sort_by_delta_desc, top_panels, proteoglycan_profile }
+
+fn insert_sorted(xs, x) {
+  if list.len(xs) == 0 then [x]
+  else if x.delta_stage4_minus_stage0 > xs[0].delta_stage4_minus_stage0
+    then list.concat([[x], xs])
+  else
+    list.concat([[xs[0]], insert_sorted(list.drop(xs, 1), x)])
+}
+
+fn sort_by_delta_desc(xs) {
+  list.fold(xs, [], fn(acc, x) {
+    insert_sorted(acc, x)
+  })
+}
+
+fn top_panels(expr_path, clinical_path) {
+  sort_by_delta_desc(
+    cexport.panel_stage_summary(expr_path, clinical_path)
+  )
+}
+
+fn proteoglycan_profile(expr_path, clinical_path) {
+  let xs = top_panels(expr_path, clinical_path)
+  in list.filter(xs, fn(x) { x.panel == "proteoglycan_fc" })
+}
