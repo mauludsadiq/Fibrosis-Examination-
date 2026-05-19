@@ -1,0 +1,101 @@
+import("std/list") as list
+import("std/str") as str
+import("std/io") as io
+import("std/rec") as rec
+import("./cohort_analysis") as cohort
+
+export { active_panel_names, cohort_flat_rows, write_cohort_csv, panel_stage_summary }
+
+fn active_panel_names() {
+  [
+    "collagen_fc",
+    "elastin_fc",
+    "lox_fc",
+    "mmp_fc",
+    "timp_fc",
+    "mineral_fc",
+    "proteoglycan_fc",
+    "inflammation_fc",
+    "tgfb_fc",
+    "tf_ecm_fc"
+  ]
+}
+
+fn panel_value(row, idx) {
+  row.panel_fold_changes[idx]
+}
+
+fn cohort_flat_rows(expr_path, clinical_path) {
+  let rows = cohort.cohort_cmfi(expr_path, clinical_path)
+  in list.map(rows, fn(r) {
+    {
+      sample_id: r.sample_id,
+      stage: r.stage,
+      cmfi: r.cmfi,
+      dphi_res: r.dphi_res,
+      dkappa_A: r.dkappa_A,
+      dkappa_B: r.dkappa_B,
+      collagen_fc: panel_value(r, 0),
+      elastin_fc: panel_value(r, 1),
+      lox_fc: panel_value(r, 2),
+      mmp_fc: panel_value(r, 3),
+      timp_fc: panel_value(r, 4),
+      mineral_fc: panel_value(r, 5),
+      proteoglycan_fc: panel_value(r, 6),
+      inflammation_fc: panel_value(r, 7),
+      tgfb_fc: panel_value(r, 8),
+      tf_ecm_fc: panel_value(r, 13)
+    }
+  })
+}
+
+fn row_line(r) {
+  str.join([
+    r.sample_id,
+    str.from(r.stage),
+    str.from(r.cmfi),
+    str.from(r.dphi_res),
+    str.from(r.dkappa_A),
+    str.from(r.dkappa_B),
+    str.from(r.collagen_fc),
+    str.from(r.elastin_fc),
+    str.from(r.lox_fc),
+    str.from(r.mmp_fc),
+    str.from(r.timp_fc),
+    str.from(r.mineral_fc),
+    str.from(r.proteoglycan_fc),
+    str.from(r.inflammation_fc),
+    str.from(r.tgfb_fc),
+    str.from(r.tf_ecm_fc)
+  ], ",")
+}
+
+fn write_cohort_csv(expr_path, clinical_path, out_path) {
+  let header = "sample_id,stage,cmfi,dphi_res,dkappa_A,dkappa_B,collagen_fc,elastin_fc,lox_fc,mmp_fc,timp_fc,mineral_fc,proteoglycan_fc,inflammation_fc,tgfb_fc,tf_ecm_fc"
+  in let rows = cohort_flat_rows(expr_path, clinical_path)
+  in let lines = list.map(rows, fn(r) { row_line(r) })
+  in io.write_file(out_path, str.join(list.concat([[header], lines]), "\n"))
+}
+
+fn mean(xs) {
+  list.fold(xs, 0.0, fn(acc, x) { acc + x }) / list.len(xs)
+}
+
+fn stage_panel_mean(rows, stage, panel_key) {
+  let selected = list.filter(rows, fn(r) { r.stage == stage })
+  in mean(list.map(selected, fn(r) { rec.get(r, panel_key) }))
+}
+
+fn panel_stage_summary(expr_path, clinical_path) {
+  let rows = cohort_flat_rows(expr_path, clinical_path)
+  in list.map(active_panel_names(), fn(panel_key) {
+    let s0 = stage_panel_mean(rows, 0.0, panel_key)
+    in let s4 = stage_panel_mean(rows, 4.0, panel_key)
+    in {
+      panel: panel_key,
+      stage0_mean: s0,
+      stage4_mean: s4,
+      delta_stage4_minus_stage0: s4 - s0
+    }
+  })
+}

@@ -1,0 +1,7 @@
+import("../fard_cmfi/cohort_export") as cexport
+
+cexport.write_cohort_csv(
+  "data/fibrosis_expr.csv",
+  "data/fibrosis_clinical.csv",
+  "out/cohort_flat.csv"
+)
