@@ -1,4 +1,3 @@
-
 Fibrosis Examination
 
 FARD rebuild of the CMFI fibrosis examination stack.
@@ -16,21 +15,13 @@ Implemented in FARD:
 * Mechanics prediction layer
 * CMFI progression
 * Integrated sample kernel
+* CSV-derived execution from raw fibrosis expression data
 
-Test commands
+Scientific result
 
-fardrun test –program tests/test_panel_definitions.fard
-fardrun test –program tests/test_latent_params.fard
-fardrun test –program tests/test_cmfi_core.fard
-fardrun test –program tests/test_panel_activity.fard
-fardrun test –program tests/test_panel_fold_change.fard
-fardrun test –program tests/test_mechanics.fard
-fardrun test –program tests/test_progression.fard
-fardrun test –program tests/test_kernel_with_mechanics.fard
+The repository now derives CMFI directly from the raw fibrosis expression dataset:
 
-Kernel path
-
-gene expression
+data/fibrosis_expr.csv
 -> panel activity
 -> baseline-normalized log2 fold-change
 -> latent fibrosis coordinates
@@ -38,9 +29,48 @@ gene expression
 -> mechanics predictions
 -> progression trajectory
 
-Core formula
+For the highest-stage fibrosis sample:
 
-CMFI = sqrt(dphi_res^2 + 4dkappa_A^2 + 4dkappa_B^2)
+sample_id: sample_4_3
+
+Derived panel fold-changes:
+
+collagen        0.86018
+elastin         0.85133
+lox             0.84557
+mmp             0.85952
+timp            0.87560
+mineral         0.91534
+proteoglycan    0.99227
+inflammation    0.86028
+tgfb            0.91496
+tf_ecm          0.90659
+
+Derived latent coordinates:
+
+dphi_res  ≈ 2.865
+dkappa_A  ≈ 1.4325
+dkappa_B  ≈ 1.4325
+
+Derived CMFI:
+
+CMFI ≈ 4.963
+
+Meaning:
+
+The fibrosis signal is now reproduced directly from source expression data inside FARD rather than from hardcoded or precomputed CMFI values.
+
+Test commands
+
+fardrun test --program tests/test_panel_definitions.fard
+fardrun test --program tests/test_latent_params.fard
+fardrun test --program tests/test_cmfi_core.fard
+fardrun test --program tests/test_panel_activity.fard
+fardrun test --program tests/test_panel_fold_change.fard
+fardrun test --program tests/test_mechanics.fard
+fardrun test --program tests/test_progression.fard
+fardrun test --program tests/test_kernel_with_mechanics.fard
+fardrun test --program tests/test_expression_csv_kernel.fard
 
 Repository layout
 
@@ -54,6 +84,13 @@ fibrosis_kernel.fard
 mechanics.fard
 progression.fard
 kernel_with_mechanics.fard
+expression_csv.fard
+cmfi_csv.fard
 
 tests/
 test_*.fard
+
+data/
+fibrosis_expr.csv
+fibrosis_clinical.csv
+cmfi_panel_v3_from_stage.csv
