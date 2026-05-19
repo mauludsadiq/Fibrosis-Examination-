@@ -1,0 +1,52 @@
+import("std/list") as list
+import("./panel_trajectories") as traj
+
+export { activation_rows, sort_by_early_desc }
+
+fn classify_early(pct) {
+  if pct >= 0.65 then "Strongly Early"
+  else if pct >= 0.57 then "Moderately Early"
+  else if pct >= 0.52 then "Balanced"
+  else "Most Progressive"
+}
+
+fn activation_row(panel_row) {
+  let t = panel_row.trajectory
+  in let s0 = t[0].mean
+  in let s2 = t[2].mean
+  in let s4 = t[4].mean
+  in let total = s4 - s0
+  in let early = s2 - s0
+  in let late = s4 - s2
+  in let pct = early / total
+  in {
+    panel: panel_row.panel,
+    total_delta: total,
+    stage2_delta: early,
+    late_delta: late,
+    pct_achieved_by_stage2: pct,
+    pct_achieved_by_stage2_percent: pct * 100.0,
+    classification: classify_early(pct)
+  }
+}
+
+fn insert_sorted(xs, x) {
+  if list.len(xs) == 0 then [x]
+  else if x.pct_achieved_by_stage2 > xs[0].pct_achieved_by_stage2
+    then list.concat([[x], xs])
+  else
+    list.concat([[xs[0]], insert_sorted(list.drop(xs, 1), x)])
+}
+
+fn sort_by_early_desc(xs) {
+  list.fold(xs, [], fn(acc, x) {
+    insert_sorted(acc, x)
+  })
+}
+
+fn activation_rows(expr_path, clinical_path) {
+  let p = traj.panel_trajectories(expr_path, clinical_path)
+  in sort_by_early_desc(list.map(p.panels, fn(panel_row) {
+    activation_row(panel_row)
+  }))
+}

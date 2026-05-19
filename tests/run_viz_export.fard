@@ -1,0 +1,7 @@
+import("../fard_cmfi/viz_export") as viz
+
+viz.write_viz_exports(
+  "data/fibrosis_expr.csv",
+  "data/fibrosis_clinical.csv",
+  "out/viz"
+)

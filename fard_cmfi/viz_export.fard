@@ -1,0 +1,82 @@
+import("std/list") as list
+import("std/str") as str
+import("std/io") as io
+import("./panel_trajectories") as traj
+import("./cohort_export") as cexport
+import("./cohort_analysis") as cohort
+
+export { trajectory_curves_csv, heatmap_csv, latent_scatter_csv, write_viz_exports }
+
+fn trajectory_line(panel_row, point) {
+  str.join([
+    panel_row.panel,
+    str.from(point.stage),
+    str.from(point.mean),
+    str.from(point.sem),
+    str.from(point.std),
+    str.from(point.min),
+    str.from(point.max),
+    str.from(point.n)
+  ], ",")
+}
+
+fn trajectory_curves_csv(expr_path, clinical_path) {
+  let t = traj.panel_trajectories(expr_path, clinical_path)
+  in let lines = list.flatten(list.map(t.panels, fn(panel_row) {
+    list.map(panel_row.trajectory, fn(point) {
+      trajectory_line(panel_row, point)
+    })
+  }))
+  in str.join(list.concat([["panel,stage,mean,sem,std,min,max,n"], lines]), "\n")
+}
+
+fn heatmap_line(panel_row) {
+  str.join([
+    panel_row.panel,
+    str.from(panel_row.trajectory[0].mean),
+    str.from(panel_row.trajectory[1].mean),
+    str.from(panel_row.trajectory[2].mean),
+    str.from(panel_row.trajectory[3].mean),
+    str.from(panel_row.trajectory[4].mean)
+  ], ",")
+}
+
+fn heatmap_csv(expr_path, clinical_path) {
+  let t = traj.panel_trajectories(expr_path, clinical_path)
+  in let lines = list.map(t.panels, fn(panel_row) { heatmap_line(panel_row) })
+  in str.join(list.concat([["panel,stage0,stage1,stage2,stage3,stage4"], lines]), "\n")
+}
+
+fn latent_line(r) {
+  str.join([
+    r.sample_id,
+    str.from(r.stage),
+    str.from(r.dphi_res),
+    str.from(r.dkappa_A),
+    str.from(r.dkappa_B),
+    str.from(r.cmfi)
+  ], ",")
+}
+
+fn latent_scatter_csv(expr_path, clinical_path) {
+  let rows = cohort.cohort_cmfi(expr_path, clinical_path)
+  in let lines = list.map(rows, fn(r) { latent_line(r) })
+  in str.join(list.concat([["sample_id,stage,dphi_res,dkappa_A,dkappa_B,cmfi"], lines]), "\n")
+}
+
+fn write_viz_exports(expr_path, clinical_path, out_dir) {
+  let _ = io.write_file(str.concat([out_dir, "/trajectory_curves.csv"]), trajectory_curves_csv(expr_path, clinical_path))
+  in let _ = io.write_file(str.concat([out_dir, "/panel_heatmap.csv"]), heatmap_csv(expr_path, clinical_path))
+  in let _ = io.write_file(str.concat([out_dir, "/latent_scatter.csv"]), latent_scatter_csv(expr_path, clinical_path))
+  in let _ = cexport.write_cohort_csv(expr_path, clinical_path, str.concat([out_dir, "/cohort_full.csv"]))
+  in {
+    status: "ok",
+    directory: out_dir,
+    files: [
+      "trajectory_curves.csv",
+      "panel_heatmap.csv",
+      "latent_scatter.csv",
+      "cohort_full.csv"
+    ]
+  }
+}

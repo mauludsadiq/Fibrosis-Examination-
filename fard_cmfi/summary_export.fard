@@ -4,9 +4,9 @@ import("std/io") as io
 import("std/math") as math
 import("./cohort_analysis") as cohort
 import("./cohort_metrics") as metrics
-import("./cohort_export") as cexport
 import("./panel_rankings") as rankings
 import("./weighted_cmfi") as w
+import("./activation_analysis") as act
 
 export { weighted_rows, weighted_stage_summary, markdown_report, csv_report, write_summary }
 
@@ -120,6 +120,22 @@ fn panel_md_line(p) {
   ])
 }
 
+fn activation_md_line(a) {
+  str.concat([
+    "| ",
+    a.panel,
+    " | ",
+    str.from(a.total_delta),
+    " | ",
+    str.from(a.pct_achieved_by_stage2_percent),
+    " | ",
+    a.classification,
+    " | ",
+    str.from(a.late_delta),
+    " |"
+  ])
+}
+
 fn stage_md_line(r) {
   str.concat([
     "| ",
@@ -142,6 +158,7 @@ fn markdown_report(expr_path, clinical_path) {
   let report = metrics.cohort_report(expr_path, clinical_path)
   in let rows = summary_rows(expr_path, clinical_path)
   in let panels = top5_panels(expr_path, clinical_path)
+  in let activation = act.activation_rows(expr_path, clinical_path)
   in str.join(list.concat([
     [
       "# CMFI Fibrosis Examination - Cohort Results",
@@ -169,7 +186,15 @@ fn markdown_report(expr_path, clinical_path) {
       "| Panel | Delta S4-S0 | Stage 0 Mean | Stage 4 Mean |",
       "|---|---:|---:|---:|"
     ],
-    list.map(panels, fn(p) { panel_md_line(p) })
+    list.map(panels, fn(p) { panel_md_line(p) }),
+    [
+      "",
+      "## Early vs Late Activation Ranking",
+      "",
+      "| Panel | Total Delta | Percent Achieved by Stage 2 | Classification | Late Delta S2-S4 |",
+      "|---|---:|---:|---|---:|"
+    ],
+    list.map(activation, fn(a) { activation_md_line(a) })
   ]), "\n")
 }
 
@@ -183,6 +208,7 @@ fn write_summary(expr_path, clinical_path, md_path, csv_path) {
     markdown: md_path,
     csv: csv_path,
     primary_metric: "original_cmfi",
-    secondary_metric: "weighted_cmfi"
+    secondary_metric: "weighted_cmfi",
+    activation_insights_included: true
   }
 }

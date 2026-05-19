@@ -1,0 +1,6 @@
+import("../fard_cmfi/activation_analysis") as act
+
+act.activation_rows(
+  "data/fibrosis_expr.csv",
+  "data/fibrosis_clinical.csv"
+)
