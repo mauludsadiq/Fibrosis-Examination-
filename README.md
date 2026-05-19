@@ -1,69 +1,53 @@
 # Fibrosis Examination
 
-A FARD-native pipeline for computing the Collapse-Mechanical Fibrosis Index (CMFI) from gene expression data.
+FARD-native pipeline for the Collapse-Mechanical Fibrosis Index (CMFI).
 
-## What it does
+## Cohort Results (synthetic, n=15, stages 0-4)
 
-Takes a gene expression matrix and clinical staging CSV as input and produces per-sample CMFI scores, organ mechanics predictions, progression trajectories, and cohort summaries.
+Pearson r: 0.9963
+Spearman rho: 0.9820
+Misrankings: 0
 
-The pipeline runs entirely in FARD with no external dependencies beyond the fardrun runtime.
+Stage summary (original CMFI, mean +/- SEM):
 
-## Pipeline
+   Stage 0   0.0595 +/- 0.0108
+   Stage 1   1.5336 +/- 0.0136
+   Stage 2   2.7799 +/- 0.0471
+   Stage 3   3.8459 +/- 0.0027
+   Stage 4   4.8398 +/- 0.0160
 
-   expression CSV + clinical CSV
-       -> panel fold-changes (27 gene panels)
-       -> latent embedding (ridge-fitted weights)
-       -> CMFI scalar (sqrt of weighted latent norm)
-       -> organ mechanics predictions (cartilage, vessel)
-       -> progression trajectories
-       -> cohort summary with Spearman rank correlation
+Top panel drivers by delta stage 4 minus stage 0:
 
-## Performance on synthetic fibrosis cohort
+   proteoglycan_fc   0.9541
+   tgfb_fc           0.9250
+   mineral_fc        0.8993
+   collagen_fc       0.8762
+   elastin_fc        0.8744
 
-   Samples: 15 (stages 0-4, 3 replicates each)
-   Pearson r: 0.996
-   Spearman rho: 0.982
-   Misrankings: 0
+Early vs late activation:
+
+   tf_ecm_fc        66.0 pct achieved by stage 2   Strongly Early
+   proteoglycan_fc  60.5 pct achieved by stage 2   Moderately Early
+   timp_fc          59.2 pct achieved by stage 2   Moderately Early
+   mineral_fc       58.3 pct achieved by stage 2   Moderately Early
+   elastin_fc       57.7 pct achieved by stage 2   Moderately Early
+   mmp_fc           56.8 pct achieved by stage 2   Balanced
+   inflammation_fc  56.6 pct achieved by stage 2   Balanced
+   collagen_fc      54.7 pct achieved by stage 2   Balanced
+   lox_fc           52.9 pct achieved by stage 2   Balanced
+   tgfb_fc          51.7 pct achieved by stage 2   Most Progressive
+
+Kappa conservation: dkappa_A + dkappa_B = 0 enforced for all samples.
+CMFI metric: sqrt(dphi_res^2 + 4*dkappa_A^2 + 4*dkappa_B^2)
 
 ## Layout
 
-   fard_cmfi/                  core library modules
-     panel_definitions.fard    27 gene panels and active set
-     latent_params.fard        fitted weight vector and intercept
-     panel_activity.fard       mean expression per panel
-     panel_fold_change.fard    log2 fold-change vs baseline
-     cmfi_core.fard            dot product, latent embedding, CMFI metric
-     fibrosis_kernel.fard      single-sample fold-change to CMFI
-     kernel_with_mechanics.fard  adds mechanics and progression
-     expression_csv.fard       CSV loader and baseline detection
-     cohort_analysis.fard      full cohort CMFI and Spearman rank
-     cohort_metrics.fard       stage summary, misrankings, report
-     cohort_export.fard        CSV writer for cohort results
-     mechanics.fard            linear organ mechanics predictions
-     progression.fard          time-stepped CMFI trajectory
-     weighted_cmfi.fard        data-driven panel weight variant
-     activation_analysis.fard  early vs late panel activation
-     panel_trajectories.fard   per-panel fold-change by stage
-     summary_export.fard       markdown and CSV summary writer
-     viz_export.fard           visualization-ready CSV exports
-
-   tests/                      test and run programs
-   data/                       expression and clinical CSVs
-   out/                        generated outputs
+   fard_cmfi/   core library modules
+   tests/       test and run programs
+   data/        expression and clinical CSVs
+   out/         generated outputs
 
 ## Running
 
    fardrun test --program tests/test_cohort_analysis.fard
    fardrun run --program tests/run_summary_export.fard --out out/summary_export
-   fardrun run --program tests/run_viz_export.fard --out out/viz_export
-
-## Key invariants
-
-   dkappa_A + dkappa_B = 0 (kappa conservation enforced in cmfi_core)
-   CMFI = sqrt(dphi_res^2 + 4*dkappa_A^2 + 4*dkappa_B^2)
-   Baseline samples identified by sample_id prefix sample_0_
-
-## Data
-
-   data/fibrosis_expr.csv       gene expression matrix, genes x samples
-   data/fibrosis_clinical.csv   sample_id and fibrosis_stage columns
