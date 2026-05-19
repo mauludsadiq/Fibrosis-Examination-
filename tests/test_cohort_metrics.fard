@@ -1,0 +1,13 @@
+import("../fard_cmfi/cohort_metrics") as metrics
+import("std/list") as list
+
+test "cohort report computes correlations and summaries" {
+  let r = metrics.cohort_report(
+    "data/fibrosis_expr.csv",
+    "data/fibrosis_clinical.csv"
+  )
+  in r.n_samples == 15 &&
+     r.spearman_rho > 0.9 &&
+     r.pearson_r > 0.9 &&
+     list.len(r.stage_summary) > 0
+}

@@ -1,0 +1,112 @@
+import("std/list") as list
+import("std/math") as math
+import("std/rec") as rec
+import("./cohort_analysis") as cohort
+
+export {
+  mean,
+  variance,
+  stddev,
+  pearson,
+  stage_groups,
+  stage_summary,
+  stage_misrankings,
+  cohort_report
+}
+
+fn mean(xs) {
+  list.fold(xs, 0.0, fn(acc, x) { acc + x }) / list.len(xs)
+}
+
+fn variance(xs) {
+  let m = mean(xs)
+  in list.fold(xs, 0.0, fn(acc, x) {
+    acc + ((x - m) * (x - m))
+  }) / list.len(xs)
+}
+
+fn stddev(xs) {
+  math.sqrt(variance(xs))
+}
+
+fn pearson(xs, ys) {
+  let mx = mean(xs)
+  in let my = mean(ys)
+  in let idx = list.range(0, list.len(xs))
+  in let num = list.fold(idx, 0.0, fn(acc, i) {
+    acc + ((xs[i] - mx) * (ys[i] - my))
+  })
+  in let denx = list.fold(idx, 0.0, fn(acc, i) {
+    acc + ((xs[i] - mx) * (xs[i] - mx))
+  })
+  in let deny = list.fold(idx, 0.0, fn(acc, i) {
+    acc + ((ys[i] - my) * (ys[i] - my))
+  })
+  in num / math.sqrt(denx * deny)
+}
+
+fn unique(xs) {
+  list.fold(xs, [], fn(acc, x) {
+    if list.any(acc, fn(y) { y == x }) then acc else list.append(acc, x)
+  })
+}
+
+fn stage_groups(rows) {
+  let stages = unique(list.map(rows, fn(r) { r.stage }))
+  in list.map(stages, fn(stage) {
+    {
+      stage: stage,
+      rows: list.filter(rows, fn(r) { r.stage == stage })
+    }
+  })
+}
+
+fn stage_summary(rows) {
+  list.map(stage_groups(rows), fn(g) {
+    let cmfis = list.map(g.rows, fn(r) { r.cmfi })
+    in {
+      stage: g.stage,
+      n: list.len(cmfis),
+      mean_cmfi: mean(cmfis),
+      std_cmfi: stddev(cmfis),
+      sem_cmfi: stddev(cmfis) / math.sqrt(list.len(cmfis))
+    }
+  })
+}
+
+fn stage_misrankings(rows) {
+  let idx = list.range(0, list.len(rows))
+  in list.filter(
+    list.flatten(
+      list.map(idx, fn(i) {
+        list.map(idx, fn(j) {
+          {
+            i: rows[i].sample_id,
+            j: rows[j].sample_id,
+            stage_i: rows[i].stage,
+            stage_j: rows[j].stage,
+            cmfi_i: rows[i].cmfi,
+            cmfi_j: rows[j].cmfi
+          }
+        })
+      })
+    ),
+    fn(p) {
+      (p.stage_i < p.stage_j) && (p.cmfi_i > p.cmfi_j)
+    }
+  )
+}
+
+fn cohort_report(expr_path, clinical_path) {
+  let rows = cohort.cohort_cmfi(expr_path, clinical_path)
+  in let stages = list.map(rows, fn(r) { r.stage })
+  in let cmfis = list.map(rows, fn(r) { r.cmfi })
+  in {
+    n_samples: list.len(rows),
+    spearman_rho: cohort.spearman(rows),
+    pearson_r: pearson(stages, cmfis),
+    stage_summary: stage_summary(rows),
+    misrankings: stage_misrankings(rows),
+    cohort_rows: rows
+  }
+}

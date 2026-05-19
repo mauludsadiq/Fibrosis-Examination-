@@ -1,0 +1,6 @@
+import("../fard_cmfi/cohort_metrics") as metrics
+
+metrics.cohort_report(
+  "data/fibrosis_expr.csv",
+  "data/fibrosis_clinical.csv"
+)
