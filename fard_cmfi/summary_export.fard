@@ -1,0 +1,189 @@
+import("std/list") as list
+import("std/str") as str
+import("std/io") as io
+import("./cohort_analysis") as cohort
+import("./cohort_metrics") as metrics
+import("./cohort_export") as cexport
+import("./panel_rankings") as rankings
+import("./weighted_cmfi") as w
+
+export { weighted_rows, weighted_stage_summary, markdown_report, csv_report, write_summary }
+
+fn mean(xs) {
+  list.fold(xs, 0.0, fn(acc, x) { acc + x }) / list.len(xs)
+}
+
+fn variance(xs) {
+  let m = mean(xs)
+  in list.fold(xs, 0.0, fn(acc, x) {
+    acc + ((x - m) * (x - m))
+  }) / list.len(xs)
+}
+
+fn stddev(xs) {
+  import("std/math") as math
+  math.sqrt(variance(xs))
+}
+
+fn sem(xs) {
+  import("std/math") as math
+  stddev(xs) / math.sqrt(list.len(xs))
+}
+
+fn weighted_rows(expr_path, clinical_path) {
+  let rows = cohort.cohort_cmfi(expr_path, clinical_path)
+  in let weights = w.normalized_panel_weights(expr_path, clinical_path)
+  in list.map(rows, fn(r) {
+    {
+      sample_id: r.sample_id,
+      stage: r.stage,
+      weighted_cmfi: w.weighted_cmfi(
+        [
+          r.panel_fold_changes[0],
+          r.panel_fold_changes[1],
+          r.panel_fold_changes[2],
+          r.panel_fold_changes[3],
+          r.panel_fold_changes[4],
+          r.panel_fold_changes[5],
+          r.panel_fold_changes[6],
+          r.panel_fold_changes[7],
+          r.panel_fold_changes[8],
+          r.panel_fold_changes[13]
+        ],
+        weights
+      )
+    }
+  })
+}
+
+fn weighted_stage_summary(expr_path, clinical_path) {
+  let rows = weighted_rows(expr_path, clinical_path)
+  in let stages = [0.0, 1.0, 2.0, 3.0, 4.0]
+  in list.map(stages, fn(stage) {
+    let selected = list.filter(rows, fn(r) { r.stage == stage })
+    in let vals = list.map(selected, fn(r) { r.weighted_cmfi })
+    in {
+      stage: stage,
+      n: list.len(vals),
+      mean_weighted_cmfi: mean(vals),
+      sem_weighted_cmfi: sem(vals)
+    }
+  })
+}
+
+fn top5_panels(expr_path, clinical_path) {
+  list.take(rankings.top_panels(expr_path, clinical_path), 5)
+}
+
+fn summary_rows(expr_path, clinical_path) {
+  let report = metrics.cohort_report(expr_path, clinical_path)
+  in let weighted = weighted_stage_summary(expr_path, clinical_path)
+  in list.map(list.range(0, list.len(report.stage_summary)), fn(i) {
+    {
+      stage: report.stage_summary[i].stage,
+      n: report.stage_summary[i].n,
+      original_mean: report.stage_summary[i].mean_cmfi,
+      original_sem: report.stage_summary[i].sem_cmfi,
+      weighted_mean: weighted[i].mean_weighted_cmfi,
+      weighted_sem: weighted[i].sem_weighted_cmfi
+    }
+  })
+}
+
+fn summary_csv_line(r) {
+  str.join([
+    str.from(r.stage),
+    str.from(r.n),
+    str.from(r.original_mean),
+    str.from(r.original_sem),
+    str.from(r.weighted_mean),
+    str.from(r.weighted_sem)
+  ], ",")
+}
+
+fn csv_report(expr_path, clinical_path) {
+  let header = "stage,n,original_cmfi_mean,original_cmfi_sem,weighted_cmfi_mean,weighted_cmfi_sem"
+  in let rows = list.map(summary_rows(expr_path, clinical_path), fn(r) { summary_csv_line(r) })
+  in str.join(list.concat([[header], rows]), "\n")
+}
+
+fn panel_md_line(p) {
+  str.concat([
+    "| ",
+    p.panel,
+    " | ",
+    str.from(p.delta_stage4_minus_stage0),
+    " | ",
+    str.from(p.stage0_mean),
+    " | ",
+    str.from(p.stage4_mean),
+    " |"
+  ])
+}
+
+fn stage_md_line(r) {
+  str.concat([
+    "| ",
+    str.from(r.stage),
+    " | ",
+    str.from(r.n),
+    " | ",
+    str.from(r.original_mean),
+    " +/- ",
+    str.from(r.original_sem),
+    " | ",
+    str.from(r.weighted_mean),
+    " +/- ",
+    str.from(r.weighted_sem),
+    " |"
+  ])
+}
+
+fn markdown_report(expr_path, clinical_path) {
+  let report = metrics.cohort_report(expr_path, clinical_path)
+  in let rows = summary_rows(expr_path, clinical_path)
+  in let panels = top5_panels(expr_path, clinical_path)
+  in str.join(list.concat([
+    [
+      "# CMFI Fibrosis Examination - Cohort Results",
+      "",
+      "Primary metric: original CMFI.",
+      "Weighted CMFI is retained as a compact-scale secondary score.",
+      "",
+      "## Performance",
+      "",
+      str.concat(["Samples: ", str.from(report.n_samples)]),
+      str.concat(["Pearson r: ", str.from(report.pearson_r)]),
+      str.concat(["Spearman rho: ", str.from(report.spearman_rho)]),
+      str.concat(["Misrankings: ", str.from(list.len(report.misrankings))]),
+      "",
+      "## Stage Summary",
+      "",
+      "| Stage | n | Original CMFI mean +/- SEM | Weighted CMFI mean +/- SEM |",
+      "|---|---:|---:|---:|"
+    ],
+    list.map(rows, fn(r) { stage_md_line(r) }),
+    [
+      "",
+      "## Top 5 Panel Drivers",
+      "",
+      "| Panel | Delta S4-S0 | Stage 0 Mean | Stage 4 Mean |",
+      "|---|---:|---:|---:|"
+    ],
+    list.map(panels, fn(p) { panel_md_line(p) })
+  ]), "\n")
+}
+
+fn write_summary(expr_path, clinical_path, md_path, csv_path) {
+  let md = markdown_report(expr_path, clinical_path)
+  in let table = csv_report(expr_path, clinical_path)
+  in let _ = io.write_file(md_path, md)
+  in let _ = io.write_file(csv_path, table)
+  in {
+    status: "ok",
+    markdown: md_path,
+    csv: csv_path,
+    primary_metric: "original_cmfi",
+    secondary_metric: "weighted_cmfi"
+  }
+}

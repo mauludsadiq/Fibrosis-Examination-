@@ -1,0 +1,75 @@
+import("std/list") as list
+import("std/math") as math
+import("std/rec") as rec
+import("./cohort_export") as cexport
+
+export { mean, variance, stddev, sem, min_value, max_value, panel_trajectory, panel_trajectories }
+
+fn mean(xs) {
+  list.fold(xs, 0.0, fn(acc, x) { acc + x }) / list.len(xs)
+}
+
+fn variance(xs) {
+  let m = mean(xs)
+  in list.fold(xs, 0.0, fn(acc, x) {
+    acc + ((x - m) * (x - m))
+  }) / list.len(xs)
+}
+
+fn stddev(xs) {
+  math.sqrt(variance(xs))
+}
+
+fn sem(xs) {
+  stddev(xs) / math.sqrt(list.len(xs))
+}
+
+fn min_value(xs) {
+  list.fold(xs, xs[0], fn(acc, x) {
+    if x < acc then x else acc
+  })
+}
+
+fn max_value(xs) {
+  list.fold(xs, xs[0], fn(acc, x) {
+    if x > acc then x else acc
+  })
+}
+
+fn stage_panel_stats(rows, stage, panel_key) {
+  let selected = list.filter(rows, fn(r) { r.stage == stage })
+  in let vals = list.map(selected, fn(r) { rec.get(r, panel_key) })
+  in {
+    stage: stage,
+    n: list.len(vals),
+    mean: mean(vals),
+    std: stddev(vals),
+    sem: sem(vals),
+    min: min_value(vals),
+    max: max_value(vals)
+  }
+}
+
+fn panel_trajectory(rows, panel_key) {
+  let stages = [0.0, 1.0, 2.0, 3.0, 4.0]
+  in let trajectory = list.map(stages, fn(stage) {
+    stage_panel_stats(rows, stage, panel_key)
+  })
+  in {
+    panel: panel_key,
+    trajectory: trajectory,
+    delta_stage4_minus_stage0: trajectory[4].mean - trajectory[0].mean
+  }
+}
+
+fn panel_trajectories(expr_path, clinical_path) {
+  let rows = cexport.cohort_flat_rows(expr_path, clinical_path)
+  in let panels = cexport.active_panel_names()
+  in {
+    panels: list.map(panels, fn(panel_key) {
+      panel_trajectory(rows, panel_key)
+    }),
+    n_rows: list.len(rows),
+    stages: [0, 1, 2, 3, 4]
+  }
+}

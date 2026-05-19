@@ -1,0 +1,8 @@
+import("../fard_cmfi/summary_export") as summary
+
+summary.write_summary(
+  "data/fibrosis_expr.csv",
+  "data/fibrosis_clinical.csv",
+  "out/cmfi_summary.md",
+  "out/cmfi_summary.csv"
+)

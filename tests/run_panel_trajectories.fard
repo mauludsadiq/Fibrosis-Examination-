@@ -1,0 +1,6 @@
+import("../fard_cmfi/panel_trajectories") as traj
+
+traj.panel_trajectories(
+  "data/fibrosis_expr.csv",
+  "data/fibrosis_clinical.csv"
+)
